@@ -1,53 +1,50 @@
 import socket
+import select
 import threading
-import instructor
-import student
 
-class SystemServer:
-    def __init__(self, host='0.0.0.0', port=5501): # use '0.0.0.0' for external connections
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Allows immediate reuse of port if restarting
-        self.server.bind((host, port))
-        self.server.listen()
-        self.clients = []
-        self.lock = threading.Lock()
-        
-    def broadcast(self, message, sender):
-        with self.lock:
-            for client in self.clients:
-                if client != sender:
-                    try:
-                        client.sendall(message)
-                    except:
-                        client.close()
-                        self.clients.remove(client)
-                        
-    def handle_client(self, conn, addr):
-        print(f"New connection: {addr}")
-        self.clients.append(conn)
-        
-        while True:
-            try:
-                message = conn.recv(1024)
-                if not message:
-                    break
-                self.broadcast(message, conn)
-            except:
+# Server configuration
+HOST = '127.0.0.1'  # Localhost for testing, replace with actual IP if needed
+PORT = 12345  # Port for the main server
+
+# Set up a dictionary to hold connected clients
+clients = {}
+
+# Multicast group details
+MULTICAST_GROUP = ('224.1.1.1', 5004)
+
+def handle_client(client_socket, addr):
+    print(f"Client {addr} connected.")
+    while True:
+        try:
+            message = client_socket.recv(1024).decode('utf-8')
+            if not message:
                 break
+            print(f"Received message from {addr}: {message}")
 
-        with self.lock:
-            conn.close()
-            self.clients.remove(conn)
-        print(f"Connection closed: {addr}")
-        
-    def start(self):
-        print("Server started")
-        while True:
-            conn, addr = self.server.accept()
-            print(f"Connected to {addr}")
-            thread = threading.Thread(target=self.handle_client, args=(conn, addr))
-            thread.start()
+            # Broadcast message to other clients in the main room
+            for client in clients.values():
+                if client != client_socket:
+                    client.send(f"{addr}: {message}".encode('utf-8'))
+        except:
+            break
+    # Remove client if disconnected
+    print(f"Client {addr} disconnected.")
+    client_socket.close()
+    del clients[addr]
+
+def start_server():
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((HOST, PORT))
+    server_socket.listen()
+
+    print("Server started, waiting for connections...")
+
+    while True:
+        client_socket, addr = server_socket.accept()
+        clients[addr] = client_socket
+        thread = threading.Thread(target=handle_client, args=(client_socket, addr))
+        thread.start()
 
 if __name__ == "__main__":
-    server = SystemServer()
-    server.start()
+    start_server()
