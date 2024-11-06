@@ -1,19 +1,44 @@
 import socket
+import threading
 
-class Instructor:
-    def __init__(self, host='localhost', port=5000):
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.connect((host, port))
-        
-    def send_message(self, message):
-        self.client.sendall(message.encode('utf-8'))
-        
-    def start(self):
-        print("Instructor connected")
-        while True:
-            message = input("Enter message: ")
-            self.send_message(f"Instructor: {message}")
-            
+# Instructor program configuration
+SERVER_HOST = '127.0.0.1'
+SERVER_PORT = 12345
+
+def send_message(sock):
+    """Handles outgoing messages from the instructor."""
+    while True:
+        message = input("Enter command (e.g., /room [room_name], /assign [student_addr] [room]): ")
+        sock.send(message.encode('utf-8'))
+
+def receive_message(sock):
+    """Receives incoming messages from the server."""
+    while True:
+        try:
+            message = sock.recv(1024).decode('utf-8')
+            if message:
+                print(f"Received: {message}")
+            else:
+                break
+        except:
+            break
+
+def main():
+    """Main function to connect to the server and handle input/output."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((SERVER_HOST, SERVER_PORT))
+    print("Instructor connected to the server.")
+
+    # Start threads to send and receive messages
+    thread_send = threading.Thread(target=send_message, args=(sock,))
+    thread_receive = threading.Thread(target=receive_message, args=(sock,))
+    thread_send.start()
+    thread_receive.start()
+
+    # Wait for threads to complete
+    thread_send.join()
+    thread_receive.join()
+    sock.close()
+
 if __name__ == "__main__":
-    instructor = Instructor()
-    instructor.start()
+    main()
