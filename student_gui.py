@@ -84,6 +84,9 @@ class MovieTheaterClient:
             try:
                 # Receive messages from the server
                 message = self.client_socket.recv(1024).decode('utf-8')
+                
+                #working on fixing disconnection issue
+                #check if message is empty, indicating disconnections
                 if message:
                     self.display_message(message)
                 else:
