@@ -6,13 +6,13 @@ SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 12345
 
 def send_message(sock):
-    """Handles outgoing messages from the instructor."""
+    #Handles outgoing messages from the instructor."""
     while True:
         message = input("Enter command (e.g., /room [room_name], /assign [student_addr] [room]): ")
         sock.send(message.encode('utf-8'))
 
 def receive_message(sock):
-    """Receives incoming messages from the server."""
+    #Receives incoming messages from the server."""
     while True:
         try:
             message = sock.recv(1024).decode('utf-8')
@@ -24,7 +24,7 @@ def receive_message(sock):
             break
 
 def main():
-    """Main function to connect to the server and handle input/output."""
+    #Main function to connect to the server and handle input/output."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((SERVER_HOST, SERVER_PORT))
     print("Instructor connected to the server.")

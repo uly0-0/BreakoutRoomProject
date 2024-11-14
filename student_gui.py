@@ -84,17 +84,21 @@ class MovieTheaterClient:
             try:
                 # Receive messages from the server
                 message = self.client_socket.recv(1024).decode('utf-8')
-                
+
                 #working on fixing disconnection issue
                 #check if message is empty, indicating disconnections
                 if message:
                     self.display_message(message)
                 else:
+                    print("Server closed the connection")
+                    self.connected = False #update connection flag
                     break
             except Exception as e:
                 print(f"Error receiving message: {e}")
                 break
-        self.disconnect()
+        #only call disconnect if we exited loop due to disconnection issue
+        if not self.connected:
+            self.disconnect()
 
     def display_message(self, message):
         # Update the message box with a new message
