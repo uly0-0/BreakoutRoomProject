@@ -1,4 +1,6 @@
 import tkinter as tk
+import cv2
+from PIL import Image,ImageTk
 from tkinter import messagebox
 import socket
 import threading
@@ -123,6 +125,23 @@ class MovieTheaterClient:
             self.client_socket.close()
         self.connected = False
         messagebox.showinfo("Info", "Disconnected from server.")
+
+def play_video(self):
+        movie = cv2.VideoCapture("path_to_video.mp4")  # Replace with actual video path
+
+        def update_frame():
+            ret, frame = movie.read()
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(frame)
+                imgTk = ImageTk.PhotoImage(image=img)
+                self.video_label.imgTk = imgTk
+                self.video_label.configure(image=imgTk)
+                self.root.after(10, update_frame)  # Schedule next frame update
+            else:
+                movie.release()  # Release the video when done
+
+        update_frame()
 
 # Run the GUI application
 root = tk.Tk()
