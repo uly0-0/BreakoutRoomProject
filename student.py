@@ -2,7 +2,7 @@ import socket
 import threading
 
 class Student:
-    def __init__(self, host='localhost', port=5000):
+    def __init__(self, host='192.168.0.39', port=5000):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((host, port))
         

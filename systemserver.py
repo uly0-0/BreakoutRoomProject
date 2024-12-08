@@ -2,8 +2,8 @@ import socket
 import threading
 
 # Server configuration
-HOST = '127.0.0.1'  # Localhost for testing, replace with actual IP if needed
-PORT = 12345  # Port for the main server
+HOST = '192.168.0.39'  # Localhost for testing, replace with actual IP if needed
+PORT = 5000  # Port for the main server
 
 # Set up data structures to manage clients and rooms
 clients = {}  # Stores client sockets with their address as the key

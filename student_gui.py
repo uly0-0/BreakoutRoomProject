@@ -4,8 +4,8 @@ import socket
 import threading
 
 # Server configuration
-SERVER_HOST = '127.0.0.1'
-SERVER_PORT = 12345
+SERVER_HOST = '192.168.0.39'
+SERVER_PORT = 5000
 
 # Create the main application window
 class MovieTheaterClient:

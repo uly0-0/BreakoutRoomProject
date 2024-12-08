@@ -2,7 +2,7 @@ import socket
 import threading
 
 # Instructor program configuration
-SERVER_HOST = '127.0.0.1'
+SERVER_HOST = '192.168.0.39'
 SERVER_PORT = 12345
 
 def send_message(sock):
