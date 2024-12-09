@@ -2,13 +2,13 @@ import socket
 import threading
 
 # Instructor program configuration
-SERVER_HOST = '192.168.0.39'
-SERVER_PORT = 12345
+SERVER_HOST = '127.0.0.1'
+SERVER_PORT = 5000
 
 def send_message(sock):
     #Handles outgoing messages from the instructor."""
     while True:
-        message = input("Enter command (e.g., /room [room_name], /assign [student_addr] [room]): ")
+        message = input("Enter command (e.g., /room [room_name], /assign [student_addr] [room]): , /create_room [room_name], /list_rooms): ")
         sock.send(message.encode('utf-8'))
 
 def receive_message(sock):
