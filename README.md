@@ -10,9 +10,11 @@ How to Run Program for Testing
 TO DO LIST
 * fix TTL issue
 * display movies on screen in gui
-* figure out how instructor.py works and document
-* creating new breakout rooms
+* get short videos to display in each room
+* document how to run instructor.py
 * instructor should have own gui
+* report on entire program
+
 
 Current Issues
 - connection issues : gui crashes and disconnects right after sending message or requesting breakout room. Messages sent get received by server but connection gets killed. Might be a Time to live issue thats killing connection. 
