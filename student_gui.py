@@ -33,6 +33,10 @@ class MovieTheaterClient:
         title_label = tk.Label(self.root, text="Virtual Movie Theater", font=("Arial", 16))
         title_label.pack(pady=10)
 
+        # Room canvas for video playback
+        self.room_canvas = tk.Canvas(self.root, width=800, height=500)
+        self.room_canvas.pack()
+
         # Video playback screen in the room
         self.video_label = tk.Label(self.room_canvas)
         self.room_canvas.create_window(400, 250, window=self.video_label, width=640, height=360)
@@ -50,10 +54,22 @@ class MovieTheaterClient:
         disconnect_button = tk.Button(self.root, text="Disconnect", command=self.disconnect)
         disconnect_button.pack(side="left", padx=10, pady=10)
 
+        #Chat box
+        self.chat_box = tk.Text(self.root, height=10, state="disabled")
+        self.chat_box.pack(padx =10, pady=10)
+
+        #Message entry box
+        self.message_entry = tk.Entry(self.root, width=80)
+        self.message_entry.pack(side = "left", padx=10, pady=10)
+
+        #Send button
+        send_button = tk.Button(self.root, text="Send", command=self.send_message)
+        send_button.pack(side="left", padx=10, pady=10)
+        
     def play_video(self):
         if not self.video_running:
             self.video_running = True
-            video_thread = threading.Thread(target=self.show_video, args=("video/videoplayback.mp4",))
+            video_thread = threading.Thread(target=self.show_video, args=("videos/video1.mp4",))
             video_thread.start()
 
     def stop_video(self):
@@ -73,12 +89,13 @@ class MovieTheaterClient:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(frame)
             imgtk = ImageTk.PhotoImage(image=img)
+            self.root.after(0,self.update_image,imgtk) # attempt to fix flicker in image and error when quitting program regaring image
+            cv2.waitKey(30)
+        self.video_capture.release()
 
+    def update_image(self, imgtk):
             self.video_label.imgtk = imgtk
             self.video_label.configure(image=imgtk)
-            self.video_label.update()
-
-        self.stop_video()
 
     def connect_to_server(self):
         if self.connected:

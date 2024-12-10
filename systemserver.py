@@ -8,10 +8,10 @@ PORT = 5000  # Port for the main server
 # Set up data structures to manage clients and rooms
 clients = {}  # Stores client sockets with their address as the key
 rooms = {
-    "main": set()
-    "room1": set()
-    "room2": set()
-    "room3": set()
+    "main": set(),
+    "room1": set(),
+    "room2": set(),
+    "room3": set(),
 }  # Dictionary of rooms, starting with a "main" room and 3 additional rooms for separate videos
 room_addresses = {
     "main": ('224.1.1.1', 5004),
@@ -20,10 +20,20 @@ room_addresses = {
     "room3": ('224.1.1.4', 5007)
 }  # Multicast addresses for rooms
 
+instructor_addr = None # address of the instructor
+# need instructor address to be able to allow only instructor to move students to designated rooms
+
 def handle_client(client_socket, addr):
+    global instructor_addr
     #Handles communication with a client
     current_room = "main"
     rooms[current_room].add(client_socket)
+    # Identify the instructor
+    if instructor_addr is None:
+        instructor_addr = addr
+        client_socket.send("You are the instructor.".encode('utf-8'))
+    else:
+        client_socket.send("You are a student.".encode('utf-8'))
 
     print(f"Client {addr} connected to the main room.")
     try:
