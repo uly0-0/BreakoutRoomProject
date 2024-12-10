@@ -68,10 +68,6 @@ def handle_client(client_socket, addr):
     finally:
         remove_client(client_socket, addr, current_room)
 
-# fixme:test the following functions
-#create room
-#change room
-#list rooms
 #function to create a new room
 def create_room(room_name):
     if room_name not in rooms:

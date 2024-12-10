@@ -29,9 +29,9 @@ class MovieTheaterClient:
         self.create_widgets()
 
     def create_widgets(self):
-        # Room canvas
-        self.room_canvas = tk.Canvas(self.root, width=800, height=500, bg="lightblue")
-        self.room_canvas.pack()
+        # Title label
+        title_label = tk.Label(self.root, text="Virtual Movie Theater", font=("Arial", 16))
+        title_label.pack(pady=10)
 
         # Video playback screen in the room
         self.video_label = tk.Label(self.room_canvas)
@@ -84,7 +84,7 @@ class MovieTheaterClient:
         if self.connected:
             messagebox.showinfo("Info", "Already connected to the server.")
             return
-
+        
         try:
             # Connect to the server
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,6 +98,20 @@ class MovieTheaterClient:
             receive_thread.start()
         except Exception as e:
             messagebox.showerror("Error", f"Connection failed: {e}")
+
+    def send_message(self):
+        if not self.connected:
+            messagebox.showerror("Error", "You need to connect to the server first.")
+            return
+
+        message = self.message_entry.get()
+        if message:
+            try:
+                # Send message to server
+                self.client_socket.send(message.encode('utf-8'))
+                self.message_entry.delete(0, tk.END)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to send message: {e}")
 
     def receive_messages(self):
         while self.connected:
