@@ -7,8 +7,18 @@ PORT = 5000  # Port for the main server
 
 # Set up data structures to manage clients and rooms
 clients = {}  # Stores client sockets with their address as the key
-rooms = {"main": set()}  # Dictionary of rooms, starting with a "main" room
-room_addresses = {"main": ('224.1.1.1', 5004)}  # Multicast addresses for rooms
+rooms = {
+    "main": set()
+    "room1": set()
+    "room2": set()
+    "room3": set()
+}  # Dictionary of rooms, starting with a "main" room and 3 additional rooms for separate videos
+room_addresses = {
+    "main": ('224.1.1.1', 5004),
+    "room1": ('224.1.1.2', 5005),
+    "room2": ('224.1.1.3', 5006),
+    "room3": ('224.1.1.4', 5007)
+}  # Multicast addresses for rooms
 
 def handle_client(client_socket, addr):
     #Handles communication with a client
