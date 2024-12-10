@@ -9,9 +9,10 @@ PORT = 5000  # Port for the main server
 clients = {}  # Stores client sockets with their address as the key
 rooms = {
     "main": set(),
-    "room1": set(),
-    "room2": set(),
-    "room3": set(),
+    "room1":{"clients": set(), "video": "room1_video.mp4"},
+    "room2":{"clients": set(), "video": "room2_video.mp4"},
+    "room3":{"clients": set(), "video": "room3_video.mp4"}
+
 }  # Dictionary of rooms, starting with a "main" room and 3 additional rooms for separate videos
 room_addresses = {
     "main": ('224.1.1.1', 5004),
@@ -35,10 +36,8 @@ def handle_client(client_socket, addr):
     else:
         client_socket.send("You are a student.".encode('utf-8'))
 
-    print(f"Client {addr} connected to the main room.")
     try:
         while True:
-            try:
                 #receive messages from the client
                 message = client_socket.recv(1024).decode('utf-8')
             
@@ -46,47 +45,71 @@ def handle_client(client_socket, addr):
                 if not message:
                     print(f"Client {addr} disconnected.")
                     break
-
-                print(f"Message from {addr} in {current_room}: {message}")
-
-                # Check if the message is a room change request or standard message
-                if message.startswith("/room "):
-                    #split command and check if room exists
-                    parts = message.split(" ", 1)
-                    if len(parts) > 1:
-                        new_room = parts[1]
-                        if new_room in rooms:
-                            change_room(client_socket, addr, current_room, new_room)
-                            current_room = new_room
-                        else:
-                            client_socket.send(f"Room {new_room} does not exist.".encode('utf-8'))
-                    #create a room command
-                    else:
-                        client_socket.send("Invalid command. Use /room [room_name] to switch rooms.".encode('utf-8'))
-                elif message.startswith("/create_room "):
-                    parts = message.split(" ", 1)
-                    if len(parts) > 1:
-                        new_room = parts[1]
-                        create_room(new_room)
-                        client_socket.send(f"Room {new_room} has been created.".encode('utf-8'))
-                    else:
-                        client_socket.send("Invalid command. Use /create_room [room_name] to create a new room.".encode('utf-8'))
-                #list rooms command
-                elif message.startswith("/list_rooms"):
-                    list_rooms(client_socket)
-                else:                        
-                    #broadcast message to all clients in the room
-                    broadcast_message(current_room, message, addr)
-            
-            except Exception as e:
-                #catch & log specific exception but allow to continue
-                print(f"Error receiving message from {addr}: {e}")
-                continue # retry instead of breaking 
-
+                
+                if addr == instructor_addr:
+                    handle_instructor_command(message, client_socket)
+                else:
+                    broadcast_message(current_room,message , client_socket)
     except Exception as e:
-        print (f"Unhandled error with client {addr}: {e}")
+        print(f"Error handling client {addr}: {e}")
     finally:
-        remove_client(client_socket, addr, current_room)
+        rooms[current_room].remove(client_socket)
+        del clients[addr]
+        client_socket.close()
+
+def handle_instructor_command(command, client_socket):
+    parts = command.split()
+    if not parts:
+            return
+
+    cmd = parts[0]
+    if cmd == "/move_student":
+            if len(parts) == 3:
+                student_username = parts[1]
+                room_name = parts[2]
+                move_student(student_username, room_name)
+    elif cmd == "/play_video":
+            if len(parts) == 2:
+                room_name = parts[1]
+                play_video(room_name)
+    elif cmd == "/list_connected_users":
+        list_connected_users(client_socket)
+    elif cmd == "/close_room":
+        if len(parts) == 2:
+            room_name = parts[1]
+            close_room(room_name)
+    elif cmd == "/create_room":
+        if len(parts) == 2:
+            room_name = parts[1]
+            create_room(room_name)
+    elif cmd == "/list_rooms":
+        list_rooms(client_socket)
+
+def move_student(student_username, room_name): #move student to a specified room
+    for addr, client_socket in clients.items():
+        if client_socket.getpeername()[0] == student_username: 
+                for room in rooms.values():
+                    if client_socket in room:
+                        room.remove(client_socket)
+                        break
+                rooms[room_name].add(client_socket)
+                client_socket.send(f"You have been moved to room: {room_name}".encode('utf-8'))
+                break
+
+#fix play video function
+def play_video(room_name): #play video in a specified room
+        return
+#list connected users
+def list_connected_users(client_socket):
+     users = [addr[0] for addr in clients.keys()]  
+     client_socket.send(f"Connected users: {', '.join(users)}".encode('utf-8'))
+
+#close room
+def close_room(room_name):
+     for client_socket in rooms[room_name]:
+        rooms["main"].add(client_socket)
+        client_socket.send(f"The room {room_name} has been closed. You have been moved to the main room.".encode('utf-8'))
+        rooms[room_name].clear()
 
 #function to create a new room
 def create_room(room_name):
@@ -108,14 +131,15 @@ def change_room(client_socket, addr, current_room, new_room):
     client_socket.send(f"You have joined room: {new_room}".encode('utf-8'))
     print(f"Client {addr} moved from {current_room} to {new_room}")
 
-def broadcast_message(room, message, addr):
+def broadcast_message(room_name, message, sender_socket):
     #Broadcasts a message to all clients in a room
-    for client in rooms[room]:
-        try:
-            client.send(f"{addr}: {message}".encode('utf-8'))
-        except:
-            client.close()
-            rooms[room].remove(client)
+    for client_socket in rooms[room_name]:
+        if client_socket != sender_socket:
+            try:
+                client_socket.send(message.encode('utf-8'))
+            except:
+                client_socket.close()
+                rooms[room_name].remove(client_socket)
 
 def remove_client(client_socket, addr, current_room):
     #Removes a client from the server and closes the socket.
@@ -128,14 +152,14 @@ def remove_client(client_socket, addr, current_room):
 
 def start_server():
     #Main server function to accept connections
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind((HOST, PORT))
-    server_socket.listen()
-
-    print("Server started, waiting for connections...")
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((HOST, PORT))
+    server.listen(5)
+    print(f"Serving on {HOST}:{PORT}\n")
+    print(f"waiting for connections...")
     while True:
-        client_socket, addr = server_socket.accept()
+        client_socket, addr = server.accept()
+        print(f"Connection from {addr}")
         clients[addr] = client_socket
         threading.Thread(target=handle_client, args=(client_socket, addr)).start()
 
