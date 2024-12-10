@@ -26,6 +26,12 @@ class MovieTheaterClient:
         title_label = tk.Label(self.root, text="Virtual Movie Theater", font=("Arial", 16))
         title_label.pack(pady=10)
 
+        # userame entry box
+        username_label = tk.Label(self.root, text="Enter your username:")
+        username_label.pack(pady=5)
+        self.username_entry = tk.Entry(self.root, width=30)
+        self.username_entry.pack(pady=5)
+
         # Message display area
         self.message_box = tk.Text(self.root, height=10, width=40, state="disabled")
         self.message_box.pack(pady=10)
@@ -51,6 +57,11 @@ class MovieTheaterClient:
             messagebox.showinfo("Info", "Already connected to the server.")
             return
         
+        self.username = self.username_entry.get()
+        if not self.username:
+                messagebox.showerror("Error", "Please enter a username.")
+                return
+        
         try:
             # Connect to the server
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -74,7 +85,8 @@ class MovieTheaterClient:
         if message:
             try:
                 # Send message to server
-                self.client_socket.send(message.encode('utf-8'))
+                full_message = f"{self.username}: {message}"
+                self.client_socket.send(full_message.encode('utf-8'))
                 self.message_entry.delete(0, tk.END)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send message: {e}")
