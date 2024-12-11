@@ -25,6 +25,11 @@ class InstructorClient:
         self.connected = False
         self.client_socket = None
 
+        #username
+        self.username = None
+        self.username_entry = tk.Entry(self.root)
+        self.username_entry.pack()
+
         # GUI components
         self.create_widgets()
 
@@ -84,6 +89,10 @@ class InstructorClient:
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client_socket.connect((SERVER_HOST, SERVER_PORT))
             self.connected = True
+            #set username attribute
+            self.username = self.username_entry.get()
+            #send username to server
+            self.client_socket.send(self.username.encode('utf-8'))
             messagebox.showinfo("Info", "Connected to the server.")
             
             # Start receiving messages in a separate thread
@@ -101,8 +110,10 @@ class InstructorClient:
         message = self.message_entry.get()
         if message:
             try:
+                # format the message as <username>: <message>
+                formatted_message = f"{self.username}: {message}"
                 # Send message to server
-                self.client_socket.send(message.encode('utf-8'))
+                self.client_socket.send(formatted_message.encode('utf-8'))
                 self.message_entry.delete(0, tk.END)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send message: {e}")
@@ -112,7 +123,7 @@ class InstructorClient:
             try:
                 # Receive messages from the server
                 message = self.client_socket.recv(1024).decode('utf-8')
-
+                print(f"Received message: {message}") #debug print
                 if message:
                     self.display_message(message)
                 else:

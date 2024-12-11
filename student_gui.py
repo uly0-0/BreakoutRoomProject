@@ -15,7 +15,7 @@ class MovieTheaterClient:
     def __init__(self, root):
         self.root = root
         self.root.title("Virtual Movie Theater Client")
-        self.root.geometry("800x600")  # Adjusted for larger room
+        self.root.geometry("600x400")  # Adjusted for larger room
 
         # Video playback state
         self.video_running = False
@@ -62,11 +62,11 @@ class MovieTheaterClient:
         disconnect_button.pack(side="left", padx=10, pady=10)
 
         #Chat box
-        self.chat_box = tk.Text(self.root, height=10, state="disabled")
-        self.chat_box.pack(padx =10, pady=10)
+        self.message_box = tk.Text(self.root, height=10, state="disabled")
+        self.message_box.pack(padx =10, pady=10)
 
         #Message entry box
-        self.message_entry = tk.Entry(self.root, width=80)
+        self.message_entry = tk.Entry(self.root, width=40)
         self.message_entry.pack(side = "left", padx=10, pady=10)
 
         #Send button
@@ -107,17 +107,19 @@ class MovieTheaterClient:
             try:
                 # Receive messages from the server
                 message = self.client_socket.recv(1024).decode('utf-8')
+                print(f"Received message: {message}") #debug print
                 if message:
-                    self.chat_box.configure(state="normal")
-                    self.chat_box.insert(tk.END, f"Server: {message}\n")
-                    self.chat_box.configure(state="disabled")
-                    self.chat_box.see(tk.END)
+                    self.display_message(message)
                 else:
                     self.connected = False
                     break
             except Exception as e:
+                messagebox.showerror("Error", f"Failed to receive message: {e}")
                 print(f"Error receiving message: {e}")
                 break
+        if not self.connected:
+            self.disconnect()
+
     def send_message(self): # send message to server
         if not self.connected:
             messagebox.showerror("Error", "You need to connect to the server first.")
@@ -131,6 +133,13 @@ class MovieTheaterClient:
                 self.message_entry.delete(0, tk.END)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send message: {e}")
+
+    
+    def display_message(self, message):
+        # Update the message box with a new message
+        self.message_box.config(state="normal")
+        self.message_box.insert(tk.END, message + "\n")
+        self.message_box.config(state="disabled")
 
     def disconnect(self): #disconnect from server
         if self.client_socket:
