@@ -145,6 +145,9 @@ def create_room(room_name):
 
 # function to list all rooms
 def list_rooms(client_socket):
+    room_list = []
+    for room_name, clients in rooms.items():
+        room_list.append(f"{room_name}: {len(clients)} clients")
     room_list = "Available rooms: " + ", ".join(rooms.keys())
     client_socket.send(room_list.encode('utf-8'))
 
