@@ -58,7 +58,7 @@ def handle_client(client_socket, addr):
 
             #Check for instructor commands
             if addr == instructor_addr:
-                handle_instructor_command(message, client_socket)
+                handle_instructor_command(message, client_socket, current_room)
             else:#broadcast message to all clients in the room
                 broadcast_message(current_room,message , client_socket)
 
@@ -71,11 +71,11 @@ def broadcast_message(room_name, message, sender_socket):
         for client_socket in rooms[room_name]:
             if client_socket != sender_socket:
                 try:
-                    client_socket.send(message.encode('utf-8'))
+                    client_socket.sendall(message.encode('utf-8'))
                 except Exception as e:
                     print(f"Error broadcasting message to {client_socket}: {e}")
 
-def handle_instructor_command(command, client_socket):
+def handle_instructor_command(command, client_socket, current_room):
     parts = command.split()
     if not parts:
         return
@@ -110,6 +110,8 @@ def handle_instructor_command(command, client_socket):
 
     elif cmd == "/list_rooms":
         list_rooms(client_socket)
+    else:
+        broadcast_message(current_room, command, client_socket)
 
 def move_student(student_username, room_name):
     print(f"Attempting to move student: {student_username} to room: {room_name}")
