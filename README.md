@@ -42,5 +42,6 @@ TO DO LIST
 
 
 Current Issues
-- connection issues : gui crashes and disconnects right after sending message or requesting breakout room. Messages sent get received by server but connection gets killed. Might be a Time to live issue thats killing connection. 
+- users cant connect to server
+connection failed "MovieTheaterClient' object has no attribute 'username' 
 

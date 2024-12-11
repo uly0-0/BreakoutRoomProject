@@ -26,35 +26,48 @@ instructor_addr = None # address of the instructor
 
 def handle_client(client_socket, addr):
     global instructor_addr
+    # Request username and store it
+    client_socket.send("Enter your username: ".encode('utf-8'))
+    username = client_socket.recv(1024).decode('utf-8')
+    clients[username] = client_socket
+
     #Handles communication with a client
     current_room = "main"
     rooms[current_room].add(client_socket)
+    
     # Identify the instructor
     if instructor_addr is None:
         instructor_addr = addr
         client_socket.send("You are the instructor.".encode('utf-8'))
     else:
         client_socket.send("You are a student.".encode('utf-8'))
+    
+    print(f"Client {addr} connected as {username} in room {current_room}")
 
     try:
         while True:
-                #receive messages from the client
-                message = client_socket.recv(1024).decode('utf-8')
+            #receive messages from the client
+            message = client_socket.recv(1024).decode('utf-8')
+        
+            #check if message is empty, indicating disconnections
+            if not message:
+                print(f"Client {username} disconnected.")
+                break
             
-                #check if message is empty, indicating disconnections
-                if not message:
-                    print(f"Client {addr} disconnected.")
-                    break
-                
-                if addr == instructor_addr:
-                    handle_instructor_command(message, client_socket)
-                else:
-                    broadcast_message(current_room,message , client_socket)
+            print(f"Message from {username} in {current_room}: {message}")
+
+            #Check for instructor commands
+            if addr == instructor_addr:
+                handle_instructor_command(message, client_socket)
+            else:#broadcast message to all clients in the room
+                broadcast_message(current_room,message , client_socket)
+
     except Exception as e:
         print(f"Error handling client {addr}: {e}")
-    finally:
+
+    finally: #remove client from the room and close the socket
         rooms[current_room].remove(client_socket)
-        del clients[addr]
+        del clients[username]
         client_socket.close()
 
 def handle_instructor_command(command, client_socket):
@@ -86,30 +99,42 @@ def handle_instructor_command(command, client_socket):
         list_rooms(client_socket)
 
 def move_student(student_username, room_name): #move student to a specified room
-    for addr, client_socket in clients.items():
-        if client_socket.getpeername()[0] == student_username: 
-                for room in rooms.values():
-                    if client_socket in room:
-                        room.remove(client_socket)
-                        break
-                rooms[room_name].add(client_socket)
-                client_socket.send(f"You have been moved to room: {room_name}".encode('utf-8'))
+    if student_username in clients:
+        client_socket= clients[student_username] 
+        for room in rooms.values():
+            if client_socket in room:
+                room.remove(client_socket)
                 break
+        rooms[room_name].add(client_socket)
+        client_socket.send(f"You have been moved to room: {room_name}".encode('utf-8'))
+    else:
+        print(f"User {student_username} not found.")
 
 #fix play video function
 def play_video(room_name): #play video in a specified room
         return
 #list connected users
 def list_connected_users(client_socket):
-     users = [addr[0] for addr in clients.keys()]  
-     client_socket.send(f"Connected users: {', '.join(users)}".encode('utf-8'))
+     users = "\n".join([str(user) for user in clients.keys()])  
+     client_socket.send(f"Connected users: \n {users}".encode('utf-8'))
 
 #close room
 def close_room(room_name):
-     for client_socket in rooms[room_name]:
-        rooms["main"].add(client_socket)
-        client_socket.send(f"The room {room_name} has been closed. You have been moved to the main room.".encode('utf-8'))
-        rooms[room_name].clear()
+    if room_name in rooms:
+        # Create a list of clients to avoid modifying the set while iterating
+        clients_to_move = list(rooms[room_name]["clients"])
+        
+        for client_socket in clients_to_move:
+            #remove clien from the current room
+            rooms[room_name]["clients"].remove(client_socket)
+            rooms["main"].add(client_socket)
+            client_socket.send(f"The room {room_name} has been closed. You have been moved to the main room.".encode('utf-8'))
+        
+        # Clear the room after moving all clients
+        rooms[room_name]["clients"].clear()
+        print(f"Room {room_name} has been closed and all clients have been moved to the main room.")
+    else:
+        print(f"Room {room_name} does not exist.")
 
 #function to create a new room
 def create_room(room_name):

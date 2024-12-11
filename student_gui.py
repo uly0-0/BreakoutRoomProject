@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 import socket
 import threading
 import cv2
@@ -25,9 +25,16 @@ class MovieTheaterClient:
         self.connected = False
         self.client_socket = None
 
+        #username
+        self.username = None
+        self.username_entry = tk.Entry(self.root)
+        self.username_entry.pack()
+
         # Create GUI components
         self.create_widgets()
 
+
+#GUI COMPONENTS 
     def create_widgets(self):
         # Title label
         title_label = tk.Label(self.root, text="Virtual Movie Theater", font=("Arial", 16))
@@ -65,7 +72,73 @@ class MovieTheaterClient:
         #Send button
         send_button = tk.Button(self.root, text="Send", command=self.send_message)
         send_button.pack(side="left", padx=10, pady=10)
+
+
+#COMMUNICATION COMPONENTS
+    def get_username(self): #prompt user for username
+        return simpledialog.askstring("Username", "Enter your username:")
+    
+    def connect_to_server(self): #connect to server
+        if self.connected:
+            messagebox.showinfo("Info", "Already connected to the server.")
+            return
         
+        try:
+            # Connect to the server
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect((SERVER_HOST, SERVER_PORT))
+            self.connected = True
+            #set username attribute
+            self.username = self.username_entry.get()
+            #send username to server
+            self.client_socket.send(self.username.encode('utf-8'))
+
+            messagebox.showinfo("Info", "Connected to the server.")
+
+            # Start receiving messages
+            receive_thread = threading.Thread(target=self.receive_messages)
+            receive_thread.daemon = True
+            receive_thread.start()
+        except Exception as e:
+            messagebox.showerror("Error", f"Connection failed: {e}")
+    
+    def receive_messages(self): # reveive messages from server
+        while self.connected:
+            try:
+                # Receive messages from the server
+                message = self.client_socket.recv(1024).decode('utf-8')
+                if message:
+                    self.chat_box.configure(state="normal")
+                    self.chat_box.insert(tk.END, f"Server: {message}\n")
+                    self.chat_box.configure(state="disabled")
+                    self.chat_box.see(tk.END)
+                else:
+                    self.connected = False
+                    break
+            except Exception as e:
+                print(f"Error receiving message: {e}")
+                break
+    def send_message(self): # send message to server
+        if not self.connected:
+            messagebox.showerror("Error", "You need to connect to the server first.")
+            return
+
+        message = self.message_entry.get()
+        if message:
+            try:
+                # Send message to server
+                self.client_socket.send(message.encode('utf-8'))
+                self.message_entry.delete(0, tk.END)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to send message: {e}")
+
+    def disconnect(self): #disconnect from server
+        if self.client_socket:
+            self.client_socket.close()
+        self.connected = False
+        messagebox.showinfo("Info", "Disconnected from server.")
+
+#VIDEO COMPONENTS
     def play_video(self):
         if not self.video_running:
             self.video_running = True
@@ -96,60 +169,7 @@ class MovieTheaterClient:
     def update_image(self, imgtk):
             self.video_label.imgtk = imgtk
             self.video_label.configure(image=imgtk)
-
-    def connect_to_server(self):
-        if self.connected:
-            messagebox.showinfo("Info", "Already connected to the server.")
-            return
-        
-        try:
-            # Connect to the server
-            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client_socket.connect((SERVER_HOST, SERVER_PORT))
-            self.connected = True
-            messagebox.showinfo("Info", "Connected to the server.")
-
-            # Start receiving messages
-            receive_thread = threading.Thread(target=self.receive_messages)
-            receive_thread.daemon = True
-            receive_thread.start()
-        except Exception as e:
-            messagebox.showerror("Error", f"Connection failed: {e}")
-
-    def send_message(self):
-        if not self.connected:
-            messagebox.showerror("Error", "You need to connect to the server first.")
-            return
-
-        message = self.message_entry.get()
-        if message:
-            try:
-                # Send message to server
-                self.client_socket.send(message.encode('utf-8'))
-                self.message_entry.delete(0, tk.END)
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to send message: {e}")
-
-    def receive_messages(self):
-        while self.connected:
-            try:
-                # Receive messages from the server
-                message = self.client_socket.recv(1024).decode('utf-8')
-                if message:
-                    print(f"Server: {message}")
-                else:
-                    self.connected = False
-                    break
-            except Exception as e:
-                print(f"Error receiving message: {e}")
-                break
-
-    def disconnect(self):
-        if self.client_socket:
-            self.client_socket.close()
-        self.connected = False
-        messagebox.showinfo("Info", "Disconnected from server.")
-
+   
 
 # Run the GUI application
 if __name__ == "__main__":
