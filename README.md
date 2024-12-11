@@ -45,3 +45,17 @@ Current Issues
 - users cant connect to server
 connection failed "MovieTheaterClient' object has no attribute 'username' 
 
+#Installing Libraries
+to install pip follow this link
+https://bootstrap.pypa.io/get-pip.py
+save file and execute with python
+py get-pip.py
+once pip is installed do the following:
+
+install opencv
+pip install openv
+
+install PIL
+pip install pillow
+
+you should now be able to execute the gui programs
