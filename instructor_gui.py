@@ -49,35 +49,30 @@ class InstructorClient:
 
         # Controls
         play_button = tk.Button(self.root, text="Play Video", command=self.play_video)
-        play_button.pack(side="left", padx=10, pady=10)
+        play_button.pack(side="left", padx=50, pady=10)
 
         stop_button = tk.Button(self.root, text="Stop Video", command=self.stop_video)
-        stop_button.pack(side="left", padx=10, pady=10)
+        stop_button.pack(side="left", padx=100, pady=10)
 
-        pause_button = tk.Button(self.root, text="Pause Video", command=self.pause_video)
-        pause_button.pack(side="left", padx=10, pady=10)
-
+    
         connect_button = tk.Button(self.root, text="Connect to Server", command=self.connect_to_server)
-        connect_button.pack(side="left", padx=10, pady=10)
+        connect_button.pack(side="right", padx=50, pady=10)
 
         disconnect_button = tk.Button(self.root, text="Disconnect", command=self.disconnect)
-        disconnect_button.pack(side="left", padx=10, pady=10)
+        disconnect_button.pack(side="right", padx=25, pady=10)
 
-        # Message display area
-        self.message_box = tk.Text(self.root, height=10, width=40, state="disabled")
-        self.message_box.pack(pady=10)
+          #Chat box
+        self.message_box = tk.Text(self.root, height=10, width=120, state="disabled")
+        self.message_box.pack(padx =10, pady=10)
 
         # Message entry box
-        self.message_entry = tk.Entry(self.root, width=30)
-        self.message_entry.pack(pady=5)
+        self.message_entry = tk.Entry(self.root, width=80)
+        self.message_entry.pack(side = "left", padx=10, pady=10)
 
-        # Send button
-        send_button = tk.Button(self.root, text="Send Command", command=self.send_message)
-        send_button.pack(pady=5)
+        #Send button
+        send_button = tk.Button(self.root, text="Send", command=self.send_message)
+        send_button.pack(side="left", padx=10, pady=10)
 
-        # Connect button
-        connect_button = tk.Button(self.root, text="Connect to Server", command=self.connect_to_server)
-        connect_button.pack(pady=5)
 
     def connect_to_server(self):
         if self.connected:
@@ -158,7 +153,10 @@ class InstructorClient:
             video_thread.start()
 
     def stop_video(self):
-        self.video_running = False
+         self.video_running = False
+         if self.video_capture:
+            self.video_capture.release()
+            self.video_capture = None
         
     
     def pause_video(self):

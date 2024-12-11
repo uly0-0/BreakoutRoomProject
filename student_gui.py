@@ -50,23 +50,24 @@ class MovieTheaterClient:
 
         # Controls
         play_button = tk.Button(self.root, text="Play Video", command=self.play_video)
-        play_button.pack(side="left", padx=10, pady=10)
+        play_button.pack(side="left", padx=50, pady=10)
+        
 
         stop_button = tk.Button(self.root, text="Stop Video", command=self.stop_video)
-        stop_button.pack(side="left", padx=10, pady=10)
+        stop_button.pack(side="left", padx=100, pady=10)
 
         connect_button = tk.Button(self.root, text="Connect to Server", command=self.connect_to_server)
-        connect_button.pack(side="left", padx=10, pady=10)
+        connect_button.pack(side="right", padx=50, pady=10)
 
         disconnect_button = tk.Button(self.root, text="Disconnect", command=self.disconnect)
-        disconnect_button.pack(side="left", padx=10, pady=10)
+        disconnect_button.pack(side="right", padx=25, pady=10)
 
         #Chat box
-        self.message_box = tk.Text(self.root, height=10, state="disabled")
+        self.message_box = tk.Text(self.root, height=10, width=120, state="disabled")
         self.message_box.pack(padx =10, pady=10)
 
         #Message entry box
-        self.message_entry = tk.Entry(self.root, width=40)
+        self.message_entry = tk.Entry(self.root, width=80)
         self.message_entry.pack(side = "left", padx=10, pady=10)
 
         #Send button
