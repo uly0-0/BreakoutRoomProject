@@ -146,6 +146,7 @@ class MovieTheaterClient:
             video_thread.start()
 
     def stop_video(self):
+        
         self.video_running = False
         if self.video_capture:
             self.video_capture.release()
