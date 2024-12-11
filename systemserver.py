@@ -65,48 +65,68 @@ def handle_client(client_socket, addr):
     except Exception as e:
         print(f"Error handling client {addr}: {e}")
 
-    finally: #remove client from the room and close the socket
-        rooms[current_room].remove(client_socket)
-        del clients[username]
-        client_socket.close()
+def broadcast_message(room_name, message, sender_socket):
+    #Broadcasts a message to all clients in a room
+    if room_name in rooms:
+        for client_socket in rooms[room_name]:
+            if client_socket != sender_socket:
+                try:
+                    client_socket.send(message.encode('utf-8'))
+                except Exception as e:
+                    print(f"Error broadcasting message to {client_socket}: {e}")
 
 def handle_instructor_command(command, client_socket):
     parts = command.split()
     if not parts:
-            return
+        return
 
     cmd = parts[0]
     if cmd == "/move_student":
-            if len(parts) == 3:
-                student_username = parts[1]
-                room_name = parts[2]
-                move_student(student_username, room_name)
+        if len(parts) == 3:
+            student_username = parts[1]
+            room_name = parts[2]
+            move_student(student_username, room_name)
+            client_socket.send(f"Moved {student_username} to {room_name}".encode('utf-8'))
+
     elif cmd == "/play_video":
-            if len(parts) == 2:
-                room_name = parts[1]
-                play_video(room_name)
+        if len(parts) == 2:
+            room_name = parts[1]
+            play_video(room_name)
+            client_socket.send(f"Playing video in {room_name}".encode('utf-8'))
+
     elif cmd == "/list_connected_users":
         list_connected_users(client_socket)
     elif cmd == "/close_room":
         if len(parts) == 2:
             room_name = parts[1]
             close_room(room_name)
+            client_socket.send(f"Closed room {room_name}".encode('utf-8'))
+
     elif cmd == "/create_room":
         if len(parts) == 2:
             room_name = parts[1]
             create_room(room_name)
+            client_socket.send(f"Created room {room_name}".encode('utf-8'))
+
     elif cmd == "/list_rooms":
         list_rooms(client_socket)
 
-def move_student(student_username, room_name): #move student to a specified room
+def move_student(student_username, room_name):
+    print(f"Attempting to move student: {student_username} to room: {room_name}")
+    print(f"Current clients: {clients}")
+    print(f"Current rooms: {rooms}")
+
     if student_username in clients:
-        client_socket= clients[student_username] 
+        client_socket = clients[student_username]
         for room in rooms.values():
-            if client_socket in room:
-                room.remove(client_socket)
+            if isinstance(room, dict) and client_socket in room["clients"]:
+                room["clients"].remove(client_socket)
                 break
-        rooms[room_name].add(client_socket)
-        client_socket.send(f"You have been moved to room: {room_name}".encode('utf-8'))
+        if room_name in rooms:
+            rooms[room_name]["clients"].add(client_socket)
+            client_socket.send(f"You have been moved to room: {room_name}".encode('utf-8'))
+        else:
+            print(f"Room {room_name} not found.")
     else:
         print(f"User {student_username} not found.")
 
@@ -159,15 +179,6 @@ def change_room(client_socket, addr, current_room, new_room):
     client_socket.send(f"You have joined room: {new_room}".encode('utf-8'))
     print(f"Client {addr} moved from {current_room} to {new_room}")
 
-def broadcast_message(room_name, message, sender_socket):
-    #Broadcasts a message to all clients in a room
-    for client_socket in rooms[room_name]:
-        if client_socket != sender_socket:
-            try:
-                client_socket.send(message.encode('utf-8'))
-            except:
-                client_socket.close()
-                rooms[room_name].remove(client_socket)
 
 def remove_client(client_socket, addr, current_room):
     #Removes a client from the server and closes the socket.

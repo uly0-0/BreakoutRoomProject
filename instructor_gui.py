@@ -13,7 +13,7 @@ class InstructorClient:
     def __init__(self, root):
         self.root = root
         self.root.title("Instructor Client")
-        self.root.geometry("400x300")
+        self.root.geometry("900x700")
         
         # Video playback state
         self.video_running = False
@@ -111,9 +111,8 @@ class InstructorClient:
         if message:
             try:
                 # format the message as <username>: <message>
-                formatted_message = f"{self.username}: {message}"
                 # Send message to server
-                self.client_socket.send(formatted_message.encode('utf-8'))
+                self.client_socket.send(message.encode('utf-8'))
                 self.message_entry.delete(0, tk.END)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send message: {e}")
@@ -132,6 +131,7 @@ class InstructorClient:
                     break
             except Exception as e:
                 print(f"Error receiving message: {e}")
+                self.connected = False
                 break
         if not self.connected:
             self.disconnect()
