@@ -59,8 +59,11 @@ def handle_client(client_socket, addr):
             #Check for instructor commands
             if addr == instructor_addr:
                 handle_instructor_command(message, client_socket, current_room)
-            else:#broadcast message to all clients in the room
-                broadcast_message(current_room,message , client_socket)
+            else:
+                if message.startswith("/private"):
+                    handle_private_message(message, client_socket)
+                else:
+                    broadcast_message(current_room, message, client_socket)
 
     except Exception as e:
         print(f"Error handling client {addr}: {e}")
@@ -113,6 +116,29 @@ def handle_instructor_command(command, client_socket, current_room):
         list_rooms(client_socket)
     else:
         broadcast_message(current_room, command, client_socket)
+
+def handle_private_message(command, sender_socket):
+    parts = command.split(maxsplit=2)
+    if len(parts) < 3:
+        sender_socket.send("Invalid private message format. Use /private <user> <message>".encode('utf-8'))
+        return
+
+    _, target_username, private_message = parts
+    if target_username in clients:
+        target_socket = clients[target_username]
+        try:
+            target_socket.send(f"Private message from {get_username(sender_socket)}: {private_message}".encode('utf-8'))
+            sender_socket.send(f"Private message sent to {target_username}".encode('utf-8'))
+        except Exception as e:
+            sender_socket.send(f"Failed to send private message to {target_username}: {e}".encode('utf-8'))
+    else:
+        sender_socket.send(f"User {target_username} not found.".encode('utf-8'))
+
+def get_username(client_socket):
+    for username, socket in clients.items():
+        if socket == client_socket:
+            return username
+    return None
 
 def move_student(student_username, room_name):
     print(f"Attempting to move student: {student_username} to room: {room_name}")
