@@ -4,6 +4,7 @@ import socket
 import threading
 import cv2
 from PIL import Image, ImageTk
+from ffpyplayer.player import MediaPlayer 
 
 # Server configuration
 SERVER_HOST = '127.0.0.1'
@@ -18,8 +19,7 @@ class InstructorClient:
         # Video playback state
         self.video_running = False
         self.video_capture = None
-
-
+        self.media_player = None
 
         # Connection status
         self.connected = False
@@ -30,7 +30,8 @@ class InstructorClient:
         self.username_entry = tk.Entry(self.root)
         self.username_entry.pack()
 
-        # GUI components
+
+# ------------------------------------- GUI components ----------------------------------------------------------------------
         self.create_widgets()
 
     def create_widgets(self):
@@ -38,7 +39,7 @@ class InstructorClient:
         title_label = tk.Label(self.root, text="Instructor Client", font=("Arial", 16))
         title_label.pack(pady=10)
 
-             # Room canvas for video playback
+        # Room canvas for video playback
         self.room_canvas = tk.Canvas(self.root, width=800, height=500)
         self.room_canvas.pack()
 
@@ -49,36 +50,35 @@ class InstructorClient:
 
         # Controls
         play_button = tk.Button(self.root, text="Play Video", command=self.play_video)
-        play_button.pack(side="left", padx=10, pady=10)
+        play_button.pack(side="left", padx=50, pady=10)
 
         stop_button = tk.Button(self.root, text="Stop Video", command=self.stop_video)
-        stop_button.pack(side="left", padx=10, pady=10)
+        stop_button.pack(side="left", padx=25, pady=10)
 
-        pause_button = tk.Button(self.root, text="Pause Video", command=self.pause_video)
-        pause_button.pack(side="left", padx=10, pady=10)
-
+    
         connect_button = tk.Button(self.root, text="Connect to Server", command=self.connect_to_server)
-        connect_button.pack(side="left", padx=10, pady=10)
+        connect_button.pack(side="right", padx=50, pady=10)
 
         disconnect_button = tk.Button(self.root, text="Disconnect", command=self.disconnect)
-        disconnect_button.pack(side="left", padx=10, pady=10)
+        disconnect_button.pack(side="right", padx=25, pady=10)
 
-        # Message display area
-        self.message_box = tk.Text(self.root, height=10, width=40, state="disabled")
-        self.message_box.pack(pady=10)
+          #Chat box
+        self.message_box = tk.Text(self.root, height=8, width=80, state="disabled")
+        self.message_box.pack(padx =10, pady=10)
 
         # Message entry box
-        self.message_entry = tk.Entry(self.root, width=30)
-        self.message_entry.pack(pady=5)
+        self.message_entry = tk.Entry(self.root, width=100)
+        self.message_entry.pack(padx=10, pady=10)
 
-        # Send button
-        send_button = tk.Button(self.root, text="Send Command", command=self.send_message)
-        send_button.pack(pady=5)
+        #Send button
+        send_button = tk.Button(self.root, text="Send", command=self.send_message)
+        send_button.pack(padx=10, pady=10)
 
-        # Connect button
-        connect_button = tk.Button(self.root, text="Connect to Server", command=self.connect_to_server)
-        connect_button.pack(pady=5)
+        self.assign_button = tk.Button(self.root, text="Assign Student", command=self.assign_student_to_room)
+        self.assign_button.pack(pady=5)
 
+
+# -------------------------------------- Socket methods ----------------------------------------------------------------------
     def connect_to_server(self):
         if self.connected:
             messagebox.showinfo("Info", "Already connected to the server.")
@@ -130,8 +130,8 @@ class InstructorClient:
                     self.connected = False
                     break
             except Exception as e:
+                messagebox.showerror("Error", f"Error receiving message: {e}")
                 print(f"Error receiving message: {e}")
-                self.connected = False
                 break
         if not self.connected:
             self.disconnect()
@@ -148,19 +148,45 @@ class InstructorClient:
         self.connected = False
         messagebox.showinfo("Info", "Disconnected from server.")
 
+    def assign_student_to_room(self):
+        if not self.connected:
+            messagebox.showerror("Error", "You need to connect to the server first.")
+            return
+
+        student = self.student_entry.get()
+        room = self.room_entry.get()
+        if student and room:
+            try:
+                command = f"/assign {student} {room}"
+                self.client_socket.send(command.encode('utf-8'))
+                self.display_message(f"Assigned {student} to {room}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to assign student: {e}")
 
 
-        #VIDEO COMPONENTS
+
+ # -------------------------- VIDEO COMPONENTS -------------------------------------------------------
     def play_video(self):
-        if not self.video_running:
+        video_path = 'videos/video1.mp4'
+        self.video_capture = cv2.VideoCapture(video_path)
+        self.media_player = MediaPlayer(video_path)
+        self.video_running = True
+        self.update_frame()
+
+
+        """   if not self.video_running:
             self.video_running = True
             video_thread = threading.Thread(target=self.show_video, args=("videos/video1.mp4",))
             video_thread.start()
-
+        """
     def stop_video(self):
         self.video_running = False
+        if self.video_capture:
+            self.video_capture.release()
+        if self.media_player:
+            self.media_player.close()
+            self.video_capture = None
         
-    
     def pause_video(self):
         self.video_running = True
 
@@ -180,9 +206,21 @@ class InstructorClient:
             cv2.waitKey(30)
         #self.video_capture.release()
 
-    def update_image(self, imgtk):
-            self.video_label.imgtk = imgtk
-            self.video_label.configure(image=imgtk)
+    def update_frame(self):
+           if self.video_running:
+            ret, frame = self.video_capture.read()
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(frame)
+                imgtk = ImageTk.PhotoImage(image=img)
+                self.video_label.imgtk = imgtk
+                self.video_label.config(image=imgtk)
+                audio_frame, val = self.media_player.get_frame()
+                if val != 'eof' and audio_frame is not None:
+                    img, t = audio_frame
+                self.root.after(10, self.update_frame)
+            else:
+                self.stop_video()
    
 
 # Run the GUI application
