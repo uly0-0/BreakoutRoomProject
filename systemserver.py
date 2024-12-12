@@ -75,6 +75,7 @@ def broadcast_message(room_name, message, sender_socket):
                 except Exception as e:
                     print(f"Error broadcasting message to {client_socket}: {e}")
 
+# Handle commands from the isntructor
 def handle_instructor_command(command, client_socket, current_room):
     parts = command.split()
     if not parts:

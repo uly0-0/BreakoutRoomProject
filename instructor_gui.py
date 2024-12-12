@@ -52,7 +52,7 @@ class InstructorClient:
         play_button.pack(side="left", padx=50, pady=10)
 
         stop_button = tk.Button(self.root, text="Stop Video", command=self.stop_video)
-        stop_button.pack(side="left", padx=100, pady=10)
+        stop_button.pack(side="left", padx=25, pady=10)
 
     
         connect_button = tk.Button(self.root, text="Connect to Server", command=self.connect_to_server)
@@ -62,16 +62,16 @@ class InstructorClient:
         disconnect_button.pack(side="right", padx=25, pady=10)
 
           #Chat box
-        self.message_box = tk.Text(self.root, height=10, width=120, state="disabled")
+        self.message_box = tk.Text(self.root, height=8, width=80, state="disabled")
         self.message_box.pack(padx =10, pady=10)
 
         # Message entry box
-        self.message_entry = tk.Entry(self.root, width=80)
-        self.message_entry.pack(side = "left", padx=10, pady=10)
+        self.message_entry = tk.Entry(self.root, width=100)
+        self.message_entry.pack(padx=10, pady=10)
 
         #Send button
         send_button = tk.Button(self.root, text="Send", command=self.send_message)
-        send_button.pack(side="left", padx=10, pady=10)
+        send_button.pack(padx=10, pady=10)
 
 
     def connect_to_server(self):

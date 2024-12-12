@@ -62,17 +62,18 @@ class MovieTheaterClient:
         disconnect_button = tk.Button(self.root, text="Disconnect", command=self.disconnect)
         disconnect_button.pack(side="right", padx=25, pady=10)
 
-        #Chat box
-        self.message_box = tk.Text(self.root, height=10, width=120, state="disabled")
+         #Chat box
+        self.message_box = tk.Text(self.root, height=8, width=80, state="disabled")
         self.message_box.pack(padx =10, pady=10)
 
-        #Message entry box
-        self.message_entry = tk.Entry(self.root, width=80)
-        self.message_entry.pack(side = "left", padx=10, pady=10)
+        
+        # Message entry box
+        self.message_entry = tk.Entry(self.root, width=100)
+        self.message_entry.pack(padx=10, pady=10)
 
-        #Send button
+         #Send button
         send_button = tk.Button(self.root, text="Send", command=self.send_message)
-        send_button.pack(side="left", padx=10, pady=10)
+        send_button.pack(padx=10, pady=10)
 
 
 #COMMUNICATION COMPONENTS
