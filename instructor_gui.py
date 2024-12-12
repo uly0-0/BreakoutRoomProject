@@ -130,8 +130,8 @@ class InstructorClient:
                     self.connected = False
                     break
             except Exception as e:
+                messagebox.showerror("Error", f"Error receiving message: {e}")
                 print(f"Error receiving message: {e}")
-                self.connected = False
                 break
         if not self.connected:
             self.disconnect()
