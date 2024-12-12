@@ -24,6 +24,8 @@ room_addresses = {
 instructor_addr = None # address of the instructor
 # need instructor address to be able to allow only instructor to move students to designated rooms
 
+
+    
 def handle_client(client_socket, addr):
     global instructor_addr
     # Request username and store it
@@ -122,6 +124,17 @@ def handle_instructor_command(command, client_socket, current_room):
 
     elif cmd == "/list_rooms":
         list_rooms(client_socket)
+    elif cmd == "/current_room":
+        if len(parts) == 2:
+            username = parts[1]
+            current_room = get_current_room(username)
+            if current_room:
+                client_socket.send(f"{username} is in {current_room}".encode('utf-8'))
+            else:
+                client_socket.send(f"{username} is not in any room.".encode('utf-8'))
+        else:
+            current_room = get_current_room(username)
+            client_socket.send(f"You are in {current_room}".encode('utf-8'))
     else:
         broadcast_message(current_room, command, client_socket)
 
@@ -147,6 +160,11 @@ def get_username(client_socket):
         if socket == client_socket:
             return username
     return None
+def get_current_room(username):
+    for room, data in rooms.items():
+        if username in data["clients"]:
+            return room
+    return None
 
 def move_student(student_username, room_name):
     print(f"Attempting to move student: {student_username} to room: {room_name}")
@@ -155,15 +173,21 @@ def move_student(student_username, room_name):
 
     if student_username in clients:
         client_socket = clients[student_username]
-        for room in rooms.values():
+        current_room = None
+        for room_name_key, room in rooms.items():
             if isinstance(room, dict) and client_socket in room["clients"]:
-                room["clients"].remove(client_socket)
+                room["clients"].remove(student_username)
+                current_room = room_name_key
                 break
-        if room_name in rooms:
-            rooms[room_name]["clients"].add(client_socket)
-            client_socket.send(f"You have been moved to room: {room_name}".encode('utf-8'))
+        if current_room:
+            if room_name in rooms:
+                rooms[room_name]["clients"].add(student_username)
+                client_socket.send(f"You have been moved to room: {room_name}".encode('utf-8'))
+            else:
+                print(f"Room {room_name} not found.")
+                rooms[current_room]["clients"].add(student_username)  # Re-add to the original room
         else:
-            print(f"Room {room_name} not found.")
+            print(f"User {student_username} was not found in any room.")
     else:
         print(f"User {student_username} not found.")
 
