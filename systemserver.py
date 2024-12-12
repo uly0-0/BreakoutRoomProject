@@ -65,7 +65,7 @@ def handle_client(client_socket, addr):
                 if message.startswith("/private"):
                     handle_private_message(message, client_socket)
                 else:
-                    broadcast_message(current_room, message, client_socket)
+                    broadcast_message(current_room, f"{username}: {message}", client_socket)
 
     except Exception as e:
         print(f"Error handling client {addr}: {e}")
