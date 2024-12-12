@@ -7,7 +7,7 @@ from PIL import Image, ImageTk
 
 
 # Server configuration
-SERVER_HOST = '127.0.0.1'
+SERVER_HOST = '192.168.56.1'
 SERVER_PORT = 5000
 
 
