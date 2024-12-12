@@ -4,6 +4,7 @@ import socket
 import threading
 import cv2
 from PIL import Image, ImageTk
+from ffpyplayer.player import MediaPlayer 
 
 # Server configuration
 SERVER_HOST = '127.0.0.1'
@@ -18,8 +19,7 @@ class InstructorClient:
         # Video playback state
         self.video_running = False
         self.video_capture = None
-
-
+        self.media_player = None
 
         # Connection status
         self.connected = False
@@ -30,7 +30,8 @@ class InstructorClient:
         self.username_entry = tk.Entry(self.root)
         self.username_entry.pack()
 
-        # GUI components
+
+# ------------------------------------- GUI components ----------------------------------------------------------------------
         self.create_widgets()
 
     def create_widgets(self):
@@ -38,7 +39,7 @@ class InstructorClient:
         title_label = tk.Label(self.root, text="Instructor Client", font=("Arial", 16))
         title_label.pack(pady=10)
 
-             # Room canvas for video playback
+        # Room canvas for video playback
         self.room_canvas = tk.Canvas(self.root, width=800, height=500)
         self.room_canvas.pack()
 
@@ -76,6 +77,8 @@ class InstructorClient:
         self.assign_button = tk.Button(self.root, text="Assign Student", command=self.assign_student_to_room)
         self.assign_button.pack(pady=5)
 
+
+# -------------------------------------- Socket methods ----------------------------------------------------------------------
     def connect_to_server(self):
         if self.connected:
             messagebox.showinfo("Info", "Already connected to the server.")
@@ -160,20 +163,30 @@ class InstructorClient:
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to assign student: {e}")
 
-        #VIDEO COMPONENTS
+
+
+ # -------------------------- VIDEO COMPONENTS -------------------------------------------------------
     def play_video(self):
-        if not self.video_running:
+        video_path = 'videos/video1.mp4'
+        self.video_capture = cv2.VideoCapture(video_path)
+        self.media_player = MediaPlayer(video_path)
+        self.video_running = True
+        self.update_frame()
+
+
+        """   if not self.video_running:
             self.video_running = True
             video_thread = threading.Thread(target=self.show_video, args=("videos/video1.mp4",))
             video_thread.start()
-
+        """
     def stop_video(self):
-         self.video_running = False
-         if self.video_capture:
+        self.video_running = False
+        if self.video_capture:
             self.video_capture.release()
+        if self.media_player:
+            self.media_player.close()
             self.video_capture = None
         
-    
     def pause_video(self):
         self.video_running = True
 
@@ -193,9 +206,21 @@ class InstructorClient:
             cv2.waitKey(30)
         #self.video_capture.release()
 
-    def update_image(self, imgtk):
-            self.video_label.imgtk = imgtk
-            self.video_label.configure(image=imgtk)
+    def update_frame(self):
+           if self.video_running:
+            ret, frame = self.video_capture.read()
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(frame)
+                imgtk = ImageTk.PhotoImage(image=img)
+                self.video_label.imgtk = imgtk
+                self.video_label.config(image=imgtk)
+                audio_frame, val = self.media_player.get_frame()
+                if val != 'eof' and audio_frame is not None:
+                    img, t = audio_frame
+                self.root.after(10, self.update_frame)
+            else:
+                self.stop_video()
    
 
 # Run the GUI application

@@ -53,11 +53,11 @@ def handle_client(client_socket, addr):
             if not message:
                 print(f"Client {username} disconnected.")
                 break
-            
             print(f"Message from {username} in {current_room}: {message}")
-
-            #Check for instructor commands
-            if addr == instructor_addr:
+            if message.startswith("REQUEST_ROOM"):
+                _, requested_room = message.split(" ", 1)
+                notify_instructor_request(username, requested_room)
+            elif addr == instructor_addr: #Check for instructor commands
                 handle_instructor_command(message, client_socket, current_room)
             else:
                 if message.startswith("/private"):
@@ -77,6 +77,14 @@ def broadcast_message(room_name, message, sender_socket):
                     client_socket.sendall(message.encode('utf-8'))
                 except Exception as e:
                     print(f"Error broadcasting message to {client_socket}: {e}")
+                    
+def notify_instructor_request(username, requested_room):
+    if instructor_addr:
+        instructor_socket = next((s for u, s in clients.items() if u == instructor_addr), None)
+        if instructor_socket:
+            instructor_socket.send(f"Student {username} requested room {requested_room}".encode('utf-8'))
+    else:
+        print(f"No instructor connected to handle request for {username}.")
 
 # Handle commands from the isntructor
 def handle_instructor_command(command, client_socket, current_room):
