@@ -131,6 +131,7 @@ class InstructorClient:
                     break
             except Exception as e:
                 messagebox.showerror("Error", f"Error receiving message: {e}")
+                messagebox.showerror("Error", f"Failed to receive message: {e}")
                 print(f"Error receiving message: {e}")
                 break
         if not self.connected:
