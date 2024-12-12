@@ -26,8 +26,6 @@ student command /private "message" will send a private message to instructor
 
 TO DO LIST
 * add 3 rooms + main room should have movies already playing
-* pause play and stop movie by instructor
-* display movies on screen in gui
 * get short videos to display in each room
 * document how to run instructor.py
 * report on entire program

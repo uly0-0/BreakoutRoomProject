@@ -73,6 +73,8 @@ class InstructorClient:
         send_button = tk.Button(self.root, text="Send", command=self.send_message)
         send_button.pack(side="left", padx=10, pady=10)
 
+        self.assign_button = tk.Button(self.root, text="Assign Student", command=self.assign_student_to_room)
+        self.assign_button.pack(pady=5)
 
     def connect_to_server(self):
         if self.connected:
@@ -143,7 +145,20 @@ class InstructorClient:
         self.connected = False
         messagebox.showinfo("Info", "Disconnected from server.")
 
+    def assign_student_to_room(self):
+        if not self.connected:
+            messagebox.showerror("Error", "You need to connect to the server first.")
+            return
 
+        student = self.student_entry.get()
+        room = self.room_entry.get()
+        if student and room:
+            try:
+                command = f"/assign {student} {room}"
+                self.client_socket.send(command.encode('utf-8'))
+                self.display_message(f"Assigned {student} to {room}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to assign student: {e}")
 
         #VIDEO COMPONENTS
     def play_video(self):
